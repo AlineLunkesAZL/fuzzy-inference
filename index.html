@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Esquemas de inferência fuzzy | Fuzzy inference schemes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }, svg: { fontCache: 'global' }, startup: { typeset: true } };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" defer></script>
+<style>
+:root{
+  --bg:#F5F7FA; --surface:#FFFFFF; --surface2:#EEF1F6; --ink:#17202C; --muted:#566173; --rule:#D9DFE8;
+  --accent:#1F3A5F; --accent-soft:#E3E9F3;
+  --mam:#2F55C8; --mam-fill:rgba(47,85,200,.18);
+  --imp:#B5620C; --imp-fill:rgba(181,98,12,.18);
+  --tsk:#2E7D5B; --cons:#8A94A6;
+  --serif:"Newsreader", Georgia, "Times New Roman", serif;
+  --sans:"IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E131B; --surface:#151C27; --surface2:#1B2431; --ink:#E4E8EF; --muted:#9AA5B6; --rule:#2A3443;
+    --accent:#A9C1E6; --accent-soft:#1E2A3B;
+    --mam:#86A2F2; --mam-fill:rgba(134,162,242,.22);
+    --imp:#ECA65A; --imp-fill:rgba(236,166,90,.2);
+    --tsk:#6CC79E; --cons:#6E788A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E131B; --surface:#151C27; --surface2:#1B2431; --ink:#E4E8EF; --muted:#9AA5B6; --rule:#2A3443;
+  --accent:#A9C1E6; --accent-soft:#1E2A3B;
+  --mam:#86A2F2; --mam-fill:rgba(134,162,242,.22);
+  --imp:#ECA65A; --imp-fill:rgba(236,166,90,.2);
+  --tsk:#6CC79E; --cons:#6E788A;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px); scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:1.125rem; line-height:1.62; -webkit-font-smoothing:antialiased}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--bg)}
+a{color:var(--accent); text-underline-offset:2px}
+a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
+img,svg{max-width:100%}
+
+/* nav */
+.nav{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--rule)}
+.nav-inner{max-width:1120px; margin:0 auto; display:flex; align-items:center; gap:1.5rem; padding:.7rem 1.25rem; overflow-x:auto; scrollbar-width:none}
+.nav-inner::-webkit-scrollbar{display:none}
+.brand{font-family:var(--sans); font-weight:600; font-size:.95rem; color:var(--ink); text-decoration:none; white-space:nowrap}
+.nav ol{display:flex; gap:1.1rem; list-style:none; margin:0; padding:0; font-family:var(--sans); font-size:.86rem; counter-reset:n}
+.nav li{white-space:nowrap; counter-increment:n}
+.nav li a{color:var(--muted); text-decoration:none}
+.nav li a::before{content:counter(n) " "; color:var(--cons)}
+.nav li a:hover{color:var(--ink)}
+/* theme */ .theme-btn{font-family:var(--sans); font-size:.82rem; background:none; border:1px solid var(--rule); color:var(--muted); border-radius:999px; padding:.3rem .75rem; cursor:pointer; white-space:nowrap}
+
+/* hero */
+.hero{max-width:1120px; margin:0 auto; padding:3.5rem 1.25rem 2rem; display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:3rem; align-items:start}
+.hero h1{font-weight:500; font-size:clamp(2.2rem, 4.2vw, 3.4rem); line-height:1.08; letter-spacing:-.01em; margin:0 0 1rem}
+.hero .lede{color:var(--muted); font-size:1.18rem; margin:0 0 1.5rem; max-width:34ch}
+.byline{font-family:var(--sans); font-size:.9rem; color:var(--muted)}
+.byline strong{color:var(--ink); font-weight:500}
+@media (max-width: 880px){ .hero{grid-template-columns:1fr; gap:2rem; padding-top:2.25rem} }
+
+/* lab */
+.lab{background:var(--surface); border:1px solid var(--rule); border-radius:14px; padding:1.25rem 1.25rem 1rem; font-family:var(--sans)}
+.lab-head{display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:.5rem 1rem; margin-bottom:.75rem}
+.lab-title{font-weight:600; font-size:1rem; margin:0}
+.lab-note{font-size:.82rem; color:var(--muted); margin:0}
+.seg{display:flex; flex-wrap:wrap; gap:.4rem; margin:.25rem 0 .9rem}
+.seg button{font:inherit; font-size:.85rem; padding:.38rem .8rem; border-radius:999px; border:1px solid var(--rule); background:var(--surface2); color:var(--ink); cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--surface)}
+.slider{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:.75rem; font-size:.9rem; margin:.4rem 0 .2rem}
+.slider input{width:100%; accent-color:var(--accent)}
+.slider output{font-variant-numeric:tabular-nums; min-width:3.2rem; text-align:right; font-weight:600}
+.plot{width:100%; height:auto; display:block; margin:.4rem 0 .2rem}
+.plot text{font-family:var(--sans); font-size:12px; fill:var(--muted)}
+@media (max-width:560px){ .plot text{font-size:21px} .plot .axis-t{display:none} }
+.readout{width:100%; border-collapse:collapse; font-size:.86rem; font-variant-numeric:tabular-nums; margin-top:.4rem}
+.readout th,.readout td{padding:.38rem .5rem; text-align:left; border-top:1px solid var(--rule)}
+.readout th{color:var(--muted); font-weight:500}
+.readout td.num,.readout th.num{text-align:right}
+.readout tr.on td{font-weight:600}
+.readout tr.on td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.check{display:flex; align-items:center; gap:.5rem; font-size:.85rem; color:var(--muted); margin-top:.7rem; cursor:pointer}
+.check input{accent-color:var(--accent)}
+.recall-note{font-size:.82rem; color:var(--muted); margin:.35rem 0 0; min-height:1.2em}
+
+/* article */
+main{max-width:1120px; margin:0 auto; padding:0 1.25rem 4rem}
+.sec{display:grid; grid-template-columns:minmax(0,3fr) minmax(0,9fr); gap:2.5rem; padding:3rem 0 1rem; border-top:1px solid var(--rule)}
+.sec-label{font-family:var(--sans); color:var(--muted); font-size:.9rem; position:sticky; top:4.5rem; align-self:start}
+.sec-label .num{display:block; font-family:var(--serif); font-size:2.6rem; line-height:1; color:var(--accent); margin-bottom:.4rem}
+.sec-body{max-width:70ch}
+.sec h2{font-weight:500; font-size:1.95rem; line-height:1.2; margin:0 0 1rem}
+.sec h3{font-weight:600; font-size:1.2rem; margin:2rem 0 .4rem}
+.sec p{margin:0 0 1rem}
+.math-block{overflow-x:auto; padding:.4rem 0; margin:.2rem 0 1rem}
+.cite{font-family:var(--sans); font-size:.78em; color:var(--muted); white-space:nowrap}
+@media (max-width: 880px){ .sec{grid-template-columns:1fr; gap:.4rem; padding-top:2.25rem} .sec-label{position:static} .sec-label .num{font-size:2rem} }
+
+.insight{border-left:3px solid var(--accent); background:var(--accent-soft); padding:.9rem 1.1rem; margin:1.4rem 0; border-radius:0 10px 10px 0}
+.insight p:last-child{margin-bottom:0}
+
+.table-wrap{overflow-x:auto; margin:1rem 0 1.4rem}
+table.data{border-collapse:collapse; width:100%; min-width:560px; font-family:var(--sans); font-size:.88rem}
+table.data caption{caption-side:top; text-align:left; color:var(--muted); font-size:.85rem; padding-bottom:.6rem}
+table.data th, table.data td{padding:.55rem .6rem; border-bottom:1px solid var(--rule); text-align:left; vertical-align:top}
+table.data thead th{font-weight:600; border-bottom:1.5px solid var(--ink)}
+.lvl-h{color:var(--tsk); font-weight:600}
+.lvl-l{color:var(--imp)}
+
+.choose{list-style:none; padding:0; margin:1rem 0}
+.choose li{padding:.9rem 0; border-bottom:1px solid var(--rule)}
+.choose b{font-family:var(--sans); font-weight:600}
+
+/* timeline */
+.timeline{list-style:none; padding:0; margin:1rem 0; position:relative}
+.timeline::before{content:""; position:absolute; left:3.3rem; top:.4rem; bottom:.4rem; width:1px; background:var(--rule)}
+.timeline li{display:grid; grid-template-columns:3.3rem 1fr; gap:1.2rem; padding:.45rem 0; position:relative}
+.timeline .yr{font-family:var(--sans); font-weight:600; font-size:.9rem; color:var(--accent); text-align:right; padding-right:.2rem; font-variant-numeric:tabular-nums}
+.timeline li::after{content:""; position:absolute; left:calc(3.3rem - 4px); top:1rem; width:9px; height:9px; border-radius:50%; background:var(--surface); border:2px solid var(--accent)}
+.timeline .ev{padding-left:.6rem; font-size:1rem}
+
+.problems{counter-reset:p; list-style:none; padding:0}
+.problems li{counter-increment:p; padding:.7rem 0 .7rem 2.4rem; position:relative; border-bottom:1px solid var(--rule)}
+.problems li::before{content:counter(p); position:absolute; left:0; top:.6rem; font-family:var(--sans); font-weight:600; color:var(--accent); width:1.6rem; height:1.6rem; border:1.5px solid var(--accent); border-radius:50%; display:grid; place-items:center; font-size:.85rem}
+
+.refs{font-family:var(--sans); font-size:.85rem; line-height:1.5; padding-left:2.2rem}
+.refs li{margin:.3rem 0; padding-left:.3rem}
+.refs li::marker{color:var(--muted)}
+footer{max-width:1120px; margin:0 auto; padding:2rem 1.25rem 3rem; border-top:1px solid var(--rule); font-family:var(--sans); font-size:.85rem; color:var(--muted)}
+mjx-container{color:inherit}
+html[data-lang="en"] .l-pt{display:none !important}
+html:not([data-lang="en"]) .l-en{display:none !important}
+.nav-tools{margin-left:auto; display:flex; gap:.5rem}
+.nav-tools button{font-family:var(--sans); font-size:.82rem; background:none; border:1px solid var(--rule); color:var(--muted); border-radius:999px; padding:.3rem .75rem; cursor:pointer; white-space:nowrap}
+.nav-tools button.lang{color:var(--ink); border-color:var(--accent)}
+mjx-container[display="true"]{margin:.4em 0 !important}
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Seções">
+  <div class="nav-inner">
+    <a class="brand" href="#topo"><span class="l-pt">Inferência fuzzy</span><span class="l-en">Fuzzy inference</span></a>
+    <ol class="l-pt">
+      <li><a href="#quadro">Quadro comum</a></li>
+      <li><a href="#classicos">Clássicos</a></li>
+      <li><a href="#logicos">Lógicos e relacionais</a></li>
+      <li><a href="#exemplo">Exemplo resolvido</a></li>
+      <li><a href="#avancados">Avançados</a></li>
+      <li><a href="#comparacao">Comparação</a></li>
+      <li><a href="#historia">Linha do tempo</a></li>
+      <li><a href="#problemas">Problemas em aberto</a></li>
+      <li><a href="#referencias">Referências</a></li>
+    </ol>
+    <ol class="l-en">
+      <li><a href="#framework">Common framework</a></li>
+      <li><a href="#classical">Classical</a></li>
+      <li><a href="#logical">Logical and relational</a></li>
+      <li><a href="#example">Worked example</a></li>
+      <li><a href="#advanced">Advanced</a></li>
+      <li><a href="#comparison">Comparison</a></li>
+      <li><a href="#timeline">Timeline</a></li>
+      <li><a href="#problems">Open problems</a></li>
+      <li><a href="#references">References</a></li>
+    </ol>
+    <div class="nav-tools"><button class="lang" id="langBtn" type="button"><span class="l-pt" aria-label="Switch to English">English</span><span class="l-en" aria-label="Mudar para português">Português</span></button><button class="theme-btn" id="themeBtn" type="button"><span class="l-pt">Tema</span><span class="l-en">Theme</span></button></div>
+  </div>
+</nav>
+
+<header class="hero" id="topo">
+  <div class="l-pt" lang="pt-BR">
+    <h1>Mesmas regras, respostas diferentes.</h1>
+    <p class="lede">Uma revisão dos esquemas de inferência fuzzy: como cada um interpreta uma regra, combina as conclusões e entrega um resultado.</p>
+    <p class="byline"><strong>Aline de Lurdes Zuliani Lunkes</strong><br>Revisão baseada no relatório “Fuzzy Inference Schemes: A Concise Review”</p>
+  </div>
+
+  <div class="l-en" lang="en">
+    <h1>Same rules, different answers.</h1>
+    <p class="lede">A review of fuzzy inference schemes: how each one interprets a rule, combines the conclusions and delivers a result.</p>
+    <p class="byline"><strong>Aline de Lurdes Zuliani Lunkes</strong><br>Based on the report “Fuzzy Inference Schemes: A Concise Review”</p>
+  </div>
+  <section class="lab" id="laboratorio" aria-labelledby="labTitle">
+    <div class="lab-head">
+      <h2 class="lab-title" id="labTitle"><span class="l-pt">Laboratório: duas regras, uma entrada</span><span class="l-en">Lab: two rules, one input</span></h2>
+      <p class="lab-note"><span class="l-pt">R₁: se x é Baixo, y é Pequeno; R₂: se x é Alto, y é Grande</span><span class="l-en">R₁: if x is Low, y is Small; R₂: if x is High, y is Large</span></p>
+    </div>
+    <div class="seg" role="group" aria-label="Esquema de inferência">
+      <button type="button" data-s="mam" aria-pressed="true">Mamdani</button>
+      <button type="button" data-s="lar" aria-pressed="false">Larsen</button>
+      <button type="button" data-s="tsk" aria-pressed="false"><span class="l-pt">TSK (ordem 0)</span><span class="l-en">TSK (order 0)</span></button>
+      <button type="button" data-s="imp" aria-pressed="false"><span class="l-pt">Implicativo (Łukasiewicz)</span><span class="l-en">Implicative (Łukasiewicz)</span></button>
+    </div>
+    <div class="slider">
+      <label for="x"><span class="l-pt">Entrada x</span><span class="l-en">Input x</span></label>
+      <input type="range" id="x" min="0" max="10" step="0.1" value="6">
+      <output id="xo" for="x">6.0</output>
+    </div>
+    <svg class="plot" id="plot" viewBox="0 0 640 262" role="img" aria-label="Conjunto fuzzy de saída do esquema selecionado"></svg>
+    <table class="readout" aria-label="Resultados de todos os esquemas">
+      <thead><tr><th><span class="l-pt">Esquema</span><span class="l-en">Scheme</span></th><th class="num"><span class="l-pt">Saída y*</span><span class="l-en">Output y*</span></th><th class="num"><span class="l-pt">Altura</span><span class="l-en">Height</span></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <label class="check"><input type="checkbox" id="recall"> <span class="l-pt">Mostrar a recuperação de Baixo por R (interação entre regras)</span><span class="l-en">Show the recall of Low through R (rule interaction)</span></label>
+    <p class="recall-note" id="recallNote" aria-live="polite"></p>
+  </section>
+</header>
+
+<main>
+<div class="l-pt" lang="pt-BR">
+<section class="sec" id="quadro">
+  <div class="sec-label"><span class="num">1</span>Quadro comum</div>
+  <div class="sec-body">
+    <h2>Toda inferência fuzzy parte da mesma pergunta</h2>
+    <p>Uma base de regras é formada por enunciados \(R_i\): se \(x_1\) é \(A_{i1}\) e … e \(x_n\) é \(A_{in}\), então \(y\) é \(C_i\). Zadeh <span class="cite">[1]</span> propôs representar uma regra como uma relação fuzzy, especificamente \(R=(A\times C)\cup(\neg A\times V)\), ou seja, \(R(x,y)=\max\big(\min(A(x),C(y)),1-A(x)\big)\), com inferência pela composição max–min. Trabalhos posteriores generalizaram essa ideia para \(R_i=\Phi(A_i,C_i)\), em que \(\Phi\) é uma t-norma (leitura conjuntiva) ou uma implicação fuzzy (leitura lógica).</p>
+    <p>Dada uma observação \(A'\), a regra composicional de inferência, na forma sup-\(T\), dá</p>
+    <div class="math-block">\[ B'(y)=\sup_{x}\,T\big(A'(x),R(x,y)\big). \]</div>
+    <p>Com fuzzificação singleton, a expressão se reduz a \(B'(y)=R(x_0,y)\), o que explica por que entradas numéricas dominam na prática. A força de disparo da regra \(i\) é \(\alpha_i(\mathbf{x})=T\big(A_{i1}(x_1),\dots,A_{in}(x_n)\big)\).</p>
+    <h3>Agregar antes ou inferir antes</h3>
+    <p>Com várias regras, pode-se agregar as relações e inferir uma vez (FATI) ou inferir com cada regra e agregar depois (FITA). Como toda t-norma se distribui sobre o máximo, as duas estratégias coincidem para regras conjuntivas agregadas por máximo, com qualquer entrada. Para regras implicativas agregadas por mínimo, coincidem com entradas singleton; com entradas fuzzy, a FITA dá em geral uma conclusão menos específica <span class="cite">[2]</span>.</p>
+    <div class="insight"><p>Todo esquema é definido por três escolhas: o operador \(\Phi\), a agregação (máximo, soma ou mínimo) e a natureza do consequente com seu passo de defuzzificação.</p></div>
+  </div>
+</section>
+
+<section class="sec" id="classicos">
+  <div class="sec-label"><span class="num">2</span>Esquemas clássicos</div>
+  <div class="sec-body">
+    <h2>Mamdani, Larsen, Tsukamoto e TSK</h2>
+    <h3>Mamdani e Larsen</h3>
+    <p>A base de regras é lida como uma disjunção de conjunções <span class="cite">[3]</span>:</p>
+    <div class="math-block">\[ B'(y)=\max_i\,T\big(\alpha_i(\mathbf{x}),C_i(y)\big), \]</div>
+    <p>com \(T=\min\) (corte, Mamdani) ou o produto (escalonamento, usualmente atribuído a Larsen <span class="cite">[4, 5]</span>). No controlador original <span class="cite">[3]</span>, as entradas eram numéricas e a ação escolhida era o ponto de maior pertinência (o ponto médio entre picos ou o centro de um platô), isto é, uma média dos máximos. O centroide \(y^*=\int yB'(y)\,dy\,/\!\int B'(y)\,dy\) virou a escolha usual depois.</p>
+    <p>Zadeh <span class="cite">[1]</span> já observava que a composição max–min torna a relação entre entrada e saída descontínua: pequenas mudanças na entrada não alteram a saída até que um limiar seja ultrapassado. Com max–produto isso não ocorre, por isso a inferência por produto produz mapeamentos mais suaves.</p>
+    <h3>Tsukamoto</h3>
+    <p>Os consequentes são funções de pertinência estritamente monotônicas, então cada regra gera um valor numérico \(z_i=C_i^{-1}(\alpha_i)\), e \(y=\sum_i\alpha_i z_i/\sum_i\alpha_i\) <span class="cite">[6]</span>. A defuzzificação desaparece, mas a exigência de monotonicidade limita os termos de saída disponíveis.</p>
+    <h3>Takagi–Sugeno–Kang (TSK)</h3>
+    <p>O consequente é uma função das entradas, tipicamente \(y_i=a_{i0}+\sum_j a_{ij}x_j\) <span class="cite">[7, 8]</span>, e</p>
+    <div class="math-block">\[ y(\mathbf{x})=\frac{\sum_i \alpha_i(\mathbf{x})\,y_i(\mathbf{x})}{\sum_i \alpha_i(\mathbf{x})}, \]</div>
+    <p>supondo que os antecedentes cubram o espaço de entrada (\(\sum_i\alpha_i(\mathbf{x})>0\), isto é, a base de regras é completa <span class="cite">[12]</span>). O modelo é uma combinação suave de modelos lineares locais. Com os antecedentes fixos, a saída é linear nos parâmetros dos consequentes; com funções de pertinência diferenciáveis (por exemplo, gaussianas) e a t-norma produto, também é diferenciável nos parâmetros dos antecedentes. Por isso pode ser identificado por mínimos quadrados combinados com gradiente, como no ANFIS <span class="cite">[9]</span>.</p>
+  </div>
+</section>
+
+<section class="sec" id="logicos">
+  <div class="sec-label"><span class="num">3</span>Lógicos e relacionais</div>
+  <div class="sec-body">
+    <h2>Quando a regra é uma restrição</h2>
+    <h3>Inferência por implicação</h3>
+    <p>Se a regra é lida como um condicional genuíno, \(R_i=I(A_i,C_i)\), as regras agem como restrições e são agregadas por conjunção:</p>
+    <div class="math-block">\[ B'(y)=\min_i\, I\big(\alpha_i(\mathbf{x}),C_i(y)\big),\qquad I(a,b)=\min(1,\,1-a+b)\ \text{(Łukasiewicz)}. \]</div>
+    <p>Dubois e Prade <span class="cite">[2]</span> mostraram que as duas leituras codificam conhecimentos diferentes. Regras conjuntivas são evidência positiva: acrescentar regras amplia a conclusão. Regras implicativas são restrições: acrescentar regras estreita a conclusão. Por isso, sistemas implicativos podem devolver conclusões vazias ou subnormais, o que, em vez de defeito, torna explícitas as inconsistências da base de regras.</p>
+    <h3>Inferência relacional</h3>
+    <p>Aqui a dependência entre entrada e saída é uma única relação fuzzy \(R\), e a inferência é a composição sup-\(T\), \(B'=A'\circ R\). Aprender \(R\) a partir de dados leva às equações relacionais fuzzy, resolvidas analiticamente por Sanchez <span class="cite">[10]</span> e estendidas a conectivos gerais e à identificação por Pedrycz <span class="cite">[11]</span>. Modelos relacionais são compactos, representam mapeamentos muitos-para-muitos e se ligam naturalmente à neurocomputação lógica com neurônios fuzzy E/OU <span class="cite">[13]</span>.</p>
+    <h3>Recuperação perfeita e interação entre regras</h3>
+    <p>Um requisito básico é a recuperação perfeita, \(A\circ(A\Rightarrow B)=B\), que Zadeh <span class="cite">[1]</span> mostrou valer exatamente apenas para conjuntos clássicos. Para \(R=\bigcup_k(A_k\times B_k)\) com \(A_k\) normais e composição sup–min,</p>
+    <div class="math-block">\[ (A_k\circ R)(y)=\max\Big(B_k(y),\ \max_{i\neq k}\min\big(\Pi(A_i|A_k),\,B_i(y)\big)\Big),\qquad \Pi(A_i|A_k)=\sup_x\min\big(A_i(x),A_k(x)\big). \]</div>
+    <p>Logo, \(B_k\subseteq A_k\circ R\) sempre, com igualdade (sem interação entre regras), por exemplo, quando os antecedentes são disjuntos dois a dois <span class="cite">[12]</span>. No laboratório acima, marque “Mostrar a recuperação” para ver esse efeito no exemplo.</p>
+  </div>
+</section>
+
+<section class="sec" id="exemplo">
+  <div class="sec-label"><span class="num">4</span>Exemplo resolvido</div>
+  <div class="sec-body">
+    <h2>As contas por trás do laboratório</h2>
+    <p>Uma entrada \(x\in[0,10]\) com termos triangulares Baixo \(=(0,0,10)\) e Alto \(=(0,10,10)\), e uma saída \(y\in[0,100]\) com Pequeno \(=(0,25,50)\) e Grande \(=(50,75,100)\). Para \(x_0=6\), as forças de disparo são \(\alpha_1=0{,}4\) e \(\alpha_2=0{,}6\).</p>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Saídas dos esquemas para as mesmas regras e \(x_0=6\).</caption>
+        <thead><tr><th>Esquema</th><th>Conjunto de saída ou cálculo</th><th>Saída numérica</th></tr></thead>
+        <tbody>
+          <tr><td>Mamdani (mín, máx)</td><td>Pequeno cortado em 0,4 ∪ Grande cortado em 0,6</td><td>Centroide: \(y^*\approx 53{,}4\)</td></tr>
+          <tr><td>Larsen (produto, máx)</td><td>0,4·Pequeno ∪ 0,6·Grande</td><td>Centroide: \(y^*=55{,}0\)</td></tr>
+          <tr><td>TSK ordem 0 (\(c_i=25,75\))</td><td>\((0{,}4\cdot25+0{,}6\cdot75)/(0{,}4+0{,}6)\)</td><td>\(y=55{,}0\)</td></tr>
+          <tr><td>Implicativo (Łukasiewicz)</td><td>\(\min\big(\min(1,0{,}6+S),\,\min(1,0{,}4+L)\big)\); altura 0,6</td><td>MOM: \(y^*=75\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Condições e derivação</h3>
+    <p>Todos os resultados usam fuzzificação singleton, \(T=\min\) nas forças de disparo e centroide contínuo em \([0,100]\) (média dos máximos para o caso implicativo). Os dois consequentes modificados não se sobrepõem, então o centroide da união é a média, ponderada pelas áreas, dos centroides de cada um, que ficam em 25 e 75 por simetria. Um triângulo de base 50 cortado na altura \(\alpha\) tem área \(25\alpha(2-\alpha)\); assim \(A_1=16\), \(A_2=21\) e</p>
+    <div class="math-block">\[ y^*_{\text{Mamdani}}=\frac{16\cdot25+21\cdot75}{37}=\frac{1975}{37}\approx 53{,}38. \]</div>
+    <p>O escalonamento (Larsen) dá áreas \(25\alpha_i\), isto é, 10 e 15, logo \(y^*=(10\cdot25+15\cdot75)/25=55\), igual à saída do TSK de ordem zero. Em geral, Larsen com centroide pondera a regra \(i\) por \(\alpha_i\) vezes a área de \(C_i\); nas condições daqui (consequentes sem sobreposição e de áreas iguais), coincide com o TSK de ordem zero com \(c_i\) nos centroides. Essas condições são suficientes, não necessárias. A saída implicativa vale 0,4 em \([0,50]\) (onde \(L=0\)) e atinge o máximo 0,6 em \([55,95]\), cujo ponto médio dá \(y^*=75\).</p>
+    <div class="insight">
+      <p>Os esquemas conjuntivos combinam a evidência das duas regras e caem entre Pequeno e Grande. O implicativo mantém só os valores que nenhuma regra exclui: sua saída é subnormal (altura 0,6), sinal de que as duas regras concordam apenas em parte, e favorece Grande porque \(R_2\) dispara mais forte.</p>
+    </div>
+    <p>Mamdani e Assilian <span class="cite">[3]</span> já usavam a forma da saída como diagnóstico: dois picos separados revelam regras contraditórias, e um platô revela regras fracas; a média dos máximos esconde essa multimodalidade <span class="cite">[12]</span>. O exemplo também mostra interação entre regras: como \(\Pi(\text{Alto}|\text{Baixo})=0{,}5\), recuperar Baixo por \(R\) dá \(\max(\text{Pequeno},\min(0{,}5,\text{Grande}))\), e não apenas Pequeno.</p>
+  </div>
+</section>
+
+<section class="sec" id="avancados">
+  <div class="sec-label"><span class="num">5</span>Esquemas avançados</div>
+  <div class="sec-body">
+    <h2>Lacunas, dimensões, incerteza e dados</h2>
+    <h3>Interpolativos e hierárquicos</h3>
+    <p>A regra composicional não dá resposta para observações que caem nas lacunas entre antecedentes. A interpolação de regras <span class="cite">[14]</span> deriva uma conclusão a partir das regras vizinhas, o que permite bases esparsas. Sistemas hierárquicos dividem as entradas entre subsistemas de baixa dimensão, de modo que o número de regras cresce linearmente em vez de exponencialmente <span class="cite">[15]</span>, ao custo de variáveis intermediárias difíceis de interpretar.</p>
+    <h3>Tipo 2</h3>
+    <p>Em conjuntos tipo 2 intervalares, o grau de pertinência é um intervalo, o que modela a incerteza sobre a própria função de pertinência <span class="cite">[16, 17]</span>. As regras produzem intervalos de disparo, e uma redução de tipo leva a \([y_l,y_r]\) e depois a \(y=(y_l+y_r)/2\). O algoritmo de Karnik–Mendel calcula os limites iterativamente; versões aprimoradas <span class="cite">[18]</span> e aproximações fechadas, como Nie–Tan <span class="cite">[19]</span>, reduzem o custo. Ganha-se robustez a ruído e a discordância entre especialistas, com mais parâmetros e mais computação.</p>
+    <h3>Baseados em aprendizado</h3>
+    <p>Sistemas neuro-fuzzy como o ANFIS <span class="cite">[9]</span> treinam sistemas TSK como redes; sistemas evolutivos como o eTS <span class="cite">[20]</span> criam e podam regras online a partir de fluxos de dados. A pesquisa atual integra inferência fuzzy e aprendizado profundo <span class="cite">[21]</span>.</p>
+    <h3>Inferência granular</h3>
+    <p>Na perspectiva da computação granular <span class="cite">[22]</span>, a saída de um modelo fuzzy deve ser ela própria um grânulo de informação (um intervalo ou um conjunto fuzzy), e não um número. O tamanho do grânulo reflete a incerteza do resultado, enfrentando uma fraqueza de todos os esquemas anteriores: uma saída numérica esconde a incerteza de onde veio. Modelos fuzzy granulares generalizam os numéricos <span class="cite">[23]</span>; por exemplo, modelos TSK de ordem zero podem ser estendidos para que suas conclusões virem intervalos, conjuntos fuzzy ou grânulos probabilísticos, construídos com o princípio da granularidade justificável <span class="cite">[24]</span>. Se o tamanho do grânulo pode ser lido como medida calibrada de confiabilidade depende de como o modelo é construído e validado, por exemplo, pela troca entre cobertura e especificidade <span class="cite">[23]</span>.</p>
+  </div>
+</section>
+
+<section class="sec" id="comparacao">
+  <div class="sec-label"><span class="num">6</span>Comparação</div>
+  <div class="sec-body">
+    <h2>Quando usar cada esquema</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Tendências indicativas, não resultados de benchmark: dependem da aplicação, das partições fuzzy, do número de regras e do método de aprendizado.</caption>
+        <thead><tr><th>Esquema</th><th>Consequente</th><th>Interpretab.</th><th>Precisão</th><th>Custo</th><th>Aprendizado</th></tr></thead>
+        <tbody>
+          <tr><td>Mamdani / Larsen</td><td>Conjunto fuzzy</td><td class="lvl-h">Alta</td><td>Média</td><td>Média–alta</td><td>Média</td></tr>
+          <tr><td>Tsukamoto</td><td>Conjunto monotônico</td><td>Média</td><td>Média</td><td>Baixo</td><td class="lvl-l">Baixo</td></tr>
+          <tr><td>TSK (1ª ordem)</td><td>Função linear</td><td>Média</td><td class="lvl-h">Alta</td><td>Baixo</td><td class="lvl-h">Alto</td></tr>
+          <tr><td>Por implicação</td><td>Conjunto fuzzy</td><td class="lvl-h">Alta</td><td>Média</td><td class="lvl-l">Alto</td><td class="lvl-l">Baixo</td></tr>
+          <tr><td>Relacional</td><td>Relação fuzzy</td><td>Média</td><td>Média</td><td>Médio</td><td>Médio</td></tr>
+          <tr><td>Hierárquico</td><td>Qualquer</td><td>Média</td><td>Média–alta</td><td>Baixo</td><td>Médio</td></tr>
+          <tr><td>Tipo 2 intervalar</td><td>Conjunto / função</td><td>Média</td><td class="lvl-h">Alta</td><td class="lvl-l">Alto</td><td>Médio</td></tr>
+          <tr><td>Neuro-fuzzy / profundo</td><td>Em geral TSK</td><td class="lvl-l">Baixa–média</td><td class="lvl-h">Alta</td><td>Médio–alto</td><td class="lvl-h">Alto</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A tabela é um mapa de tendências, não um ranking: um Mamdani bem projetado pode superar um TSK mal ajustado. A comparação mais robusta vem da estrutura matemática de cada esquema.</p>
+    <ul class="choose">
+      <li><b>Mamdani / Larsen.</b> A saída é um conjunto fuzzy, e os consequentes são termos linguísticos que especialistas validam. O centroide torna \(y^*\) não linear nos parâmetros dos consequentes, o que dificulta o aprendizado. Use quando o modelo precisa ser lido e validado por pessoas, ou quando a forma de \(B'\) é informativa.</li>
+      <li><b>TSK.</b> Com os antecedentes fixos, a saída é linear nos parâmetros dos consequentes, que podem ser estimados por mínimos quadrados, e cada regra é um modelo linear local que admite análise de estabilidade. Use para modelagem a partir de dados, identificação e controle baseado em modelo.</li>
+      <li><b>Por implicação.</b> As regras são agregadas por conjunção, então cada uma restringe a saída. Use quando as regras expressam restrições, ou quando conflitos devem ser expostos em vez de mediados.</li>
+      <li><b>Tipo 2 intervalar.</b> Use quando as próprias funções de pertinência são incertas (dados ruidosos, especialistas discordantes) e o custo da redução de tipo é aceitável.</li>
+      <li><b>Hierárquico / interpolativo.</b> Use quando o número de entradas ou as lacunas na base tornam inviável uma base completa e plana.</li>
+    </ul>
+    <p>Os esquemas de inferência também sustentam a decisão multicritério sob incerteza, em que relações de preferência fuzzy entre alternativas são construídas, agregadas e exploradas para ordenar ou escolher opções <span class="cite">[25, 26]</span>. Sistemas tipo Mamdani (produto, centroide), aditivos e TSK são aproximadores universais em domínios compactos <span class="cite">[27, 28]</span>; esses resultados são existenciais e nada dizem sobre o número de regras ou a interpretabilidade.</p>
+  </div>
+</section>
+
+<section class="sec" id="historia">
+  <div class="sec-label"><span class="num">7</span>Linha do tempo</div>
+  <div class="sec-body">
+    <h2>Cinco décadas de esquemas</h2>
+    <ol class="timeline">
+      <li><span class="yr">1973</span><span class="ev">Zadeh formaliza regras como relações fuzzy e propõe a regra composicional de inferência <span class="cite">[1]</span>.</span></li>
+      <li><span class="yr">1975</span><span class="ev">Mamdani e Assilian controlam uma máquina a vapor com regras linguísticas e inferência max–min <span class="cite">[3]</span>.</span></li>
+      <li><span class="yr">1976</span><span class="ev">Sanchez resolve analiticamente equações relacionais fuzzy <span class="cite">[10]</span>.</span></li>
+      <li><span class="yr">1979</span><span class="ev">Tsukamoto propõe consequentes monotônicos sem defuzzificação <span class="cite">[6]</span>.</span></li>
+      <li><span class="yr">1980</span><span class="ev">Larsen relata aplicações industriais, incluindo fornos de cimento <span class="cite">[4]</span>.</span></li>
+      <li><span class="yr">1983</span><span class="ev">Pedrycz estende as equações relacionais a conectivos gerais <span class="cite">[11]</span>.</span></li>
+      <li><span class="yr">1985</span><span class="ev">Takagi e Sugeno introduzem consequentes funcionais <span class="cite">[7]</span>.</span></li>
+      <li><span class="yr">1989</span><span class="ev">Pedrycz formaliza completude, interação e consistência das regras <span class="cite">[12]</span>.</span></li>
+      <li><span class="yr">1993</span><span class="ev">ANFIS une TSK e redes neurais <span class="cite">[9]</span>; Kóczy e Hirota propõem a interpolação de regras <span class="cite">[14]</span>.</span></li>
+      <li><span class="yr">1996</span><span class="ev">Dubois e Prade distinguem regras como evidência e como restrição <span class="cite">[2]</span>.</span></li>
+      <li><span class="yr">1999</span><span class="ev">Karnik, Mendel e Liang estabelecem os sistemas fuzzy tipo 2 <span class="cite">[16]</span>.</span></li>
+      <li><span class="yr">2004</span><span class="ev">Angelov e Filev propõem a identificação online de modelos TSK <span class="cite">[20]</span>.</span></li>
+      <li><span class="yr">2010</span><span class="ev">Pedrycz, Ekel e Parreiras sistematizam a decisão multicritério fuzzy <span class="cite">[25]</span>.</span></li>
+      <li><span class="yr">2013</span><span class="ev">Pedrycz consolida a computação granular <span class="cite">[22]</span>.</span></li>
+      <li><span class="yr">2023</span><span class="ev">Revisões sobre sistemas fuzzy profundos e interpretabilidade <span class="cite">[21]</span>.</span></li>
+      <li><span class="yr">2025</span><span class="ev">Modelos TSK estendidos a conclusões granulares <span class="cite">[24]</span>.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="problemas">
+  <div class="sec-label"><span class="num">8</span>Problemas em aberto</div>
+  <div class="sec-body">
+    <h2>O que ainda não está resolvido</h2>
+    <ol class="problems">
+      <li><b>Escalabilidade e interpretabilidade.</b> A explosão de regras (\(m^n\) regras para \(n\) entradas com \(m\) termos) é atenuada por esquemas hierárquicos e profundos, mas à custa do significado.</li>
+      <li><b>Medir interpretabilidade.</b> Existem vários índices <span class="cite">[29]</span>, mas nenhum padrão aceito permite comparar esquemas de forma justa.</li>
+      <li><b>Inferência eficiente de tipo superior.</b> A redução de tipo ainda é um gargalo para sistemas tipo 2 gerais em tempo real e em hardware embarcado.</li>
+      <li><b>Saídas que quantificam a própria incerteza.</b> Saídas granulares são promissoras, mas ainda pouco usadas em modelos baseados em aprendizado.</li>
+      <li><b>Benchmarks.</b> Conjuntos de dados e protocolos diferentes tornam pouco confiáveis os rankings empíricos de esquemas.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="referencias">
+  <div class="sec-label"><span class="num">9</span>Referências</div>
+  <div class="sec-body">
+    <h2>Referências</h2>
+    <ol class="refs">
+      <li>L. A. Zadeh, Outline of a new approach to the analysis of complex systems and decision processes, <i>IEEE Trans. SMC</i> 3(1) (1973) 28–44.</li>
+      <li>D. Dubois, H. Prade, What are fuzzy rules and how to use them, <i>Fuzzy Sets Syst.</i> 84(2) (1996) 169–185.</li>
+      <li>E. H. Mamdani, S. Assilian, An experiment in linguistic synthesis with a fuzzy logic controller, <i>Int. J. Man-Mach. Stud.</i> 7(1) (1975) 1–13.</li>
+      <li>P. M. Larsen, Industrial applications of fuzzy logic control, <i>Int. J. Man-Mach. Stud.</i> 12(1) (1980) 3–10.</li>
+      <li>A. Kandel, R. Pacheco, A. Martins, S. Khator, The foundations of rule-based computations in fuzzy models, in: W. Pedrycz (Ed.), <i>Fuzzy Modelling: Paradigms and Practice</i>, Kluwer, Boston, 1996, 231–263.</li>
+      <li>Y. Tsukamoto, An approach to fuzzy reasoning method, in: <i>Advances in Fuzzy Set Theory and Applications</i>, North-Holland, 1979, 137–149.</li>
+      <li>T. Takagi, M. Sugeno, Fuzzy identification of systems and its applications to modeling and control, <i>IEEE Trans. SMC</i> 15(1) (1985) 116–132.</li>
+      <li>M. Sugeno, G. T. Kang, Structure identification of fuzzy model, <i>Fuzzy Sets Syst.</i> 28(1) (1988) 15–33.</li>
+      <li>J.-S. R. Jang, ANFIS: Adaptive-network-based fuzzy inference system, <i>IEEE Trans. SMC</i> 23(3) (1993) 665–685.</li>
+      <li>E. Sanchez, Resolution of composite fuzzy relation equations, <i>Inf. Control</i> 30(1) (1976) 38–48.</li>
+      <li>W. Pedrycz, Fuzzy relational equations with generalized connectives and their applications, <i>Fuzzy Sets Syst.</i> 10 (1983) 185–201.</li>
+      <li>W. Pedrycz, <i>Fuzzy Control and Fuzzy Systems</i>, Research Studies Press, Taunton / Wiley, New York, 1989.</li>
+      <li>W. Pedrycz, F. Gomide, <i>Fuzzy Systems Engineering: Toward Human-Centric Computing</i>, Wiley-IEEE Press, 2007.</li>
+      <li>L. T. Kóczy, K. Hirota, Approximate reasoning by linear rule interpolation and general approximation, <i>Int. J. Approx. Reason.</i> 9(3) (1993) 197–225.</li>
+      <li>V. Torra, A review of the construction of hierarchical fuzzy systems, <i>Int. J. Intell. Syst.</i> 17(5) (2002) 531–543.</li>
+      <li>N. N. Karnik, J. M. Mendel, Q. Liang, Type-2 fuzzy logic systems, <i>IEEE Trans. Fuzzy Syst.</i> 7(6) (1999) 643–658.</li>
+      <li>J. M. Mendel, <i>Uncertain Rule-Based Fuzzy Systems</i>, 2nd ed., Springer, 2017.</li>
+      <li>D. Wu, J. M. Mendel, Enhanced Karnik–Mendel algorithms, <i>IEEE Trans. Fuzzy Syst.</i> 17(4) (2009) 923–934.</li>
+      <li>M. Nie, W. W. Tan, Towards an efficient type-reduction method for interval type-2 fuzzy logic systems, <i>Proc. FUZZ-IEEE</i> (2008) 1425–1432.</li>
+      <li>P. P. Angelov, D. P. Filev, An approach to online identification of Takagi–Sugeno fuzzy models, <i>IEEE Trans. SMC-B</i> 34(1) (2004) 484–498.</li>
+      <li>J. S. S. Júnior, J. Mendes, F. Souza, C. Premebida, Survey on deep fuzzy systems in regression applications: a view on interpretability, <i>Int. J. Fuzzy Syst.</i> 25(7) (2023) 2568–2589. doi:<a href="https://doi.org/10.1007/s40815-023-01544-8">10.1007/s40815-023-01544-8</a>.</li>
+      <li>W. Pedrycz, <i>Granular Computing: Analysis and Design of Intelligent Systems</i>, CRC Press, 2013.</li>
+      <li>W. Pedrycz, From fuzzy models to granular fuzzy models, <i>Int. J. Comput. Intell. Syst.</i> 9(Suppl. 1) (2016) 35–42. doi:<a href="https://doi.org/10.1080/18756891.2016.1180818">10.1080/18756891.2016.1180818</a>.</li>
+      <li>Y. Cui, H. E, W. Pedrycz, Z. Li, X. Wang, From fuzzy rule-based models to granular models, <i>IEEE Trans. Fuzzy Syst.</i> 33(2) (2025) 644–656. doi:<a href="https://doi.org/10.1109/TFUZZ.2024.3483817">10.1109/TFUZZ.2024.3483817</a>.</li>
+      <li>W. Pedrycz, P. Ekel, R. Parreiras, <i>Fuzzy Multicriteria Decision-Making: Models, Methods and Applications</i>, Wiley, 2010.</li>
+      <li>P. Ekel, W. Pedrycz, J. Pereira Jr., <i>Multicriteria Decision-Making under Conditions of Uncertainty</i>, Wiley, 2020.</li>
+      <li>L.-X. Wang, J. M. Mendel, Fuzzy basis functions, universal approximation, and orthogonal least-squares learning, <i>IEEE Trans. Neural Netw.</i> 3(5) (1992) 807–814.</li>
+      <li>B. Kosko, Fuzzy systems as universal approximators, <i>IEEE Trans. Comput.</i> 43(11) (1994) 1329–1333.</li>
+      <li>M. J. Gacto, R. Alcalá, F. Herrera, Interpretability of linguistic fuzzy rule-based systems: an overview of interpretability measures, <i>Inf. Sci.</i> 181(20) (2011) 4340–4360.</li>
+    </ol>
+  </div>
+</section>
+</div>
+<div class="l-en" lang="en">
+<section class="sec" id="framework">
+  <div class="sec-label"><span class="num">1</span>Common framework</div>
+  <div class="sec-body">
+    <h2>Every fuzzy inference starts from the same question</h2>
+    <p>A rule base consists of statements \(R_i\): if \(x_1\) is \(A_{i1}\) and … and \(x_n\) is \(A_{in}\), then \(y\) is \(C_i\). Zadeh <span class="cite">[1]</span> proposed representing a rule as a fuzzy relation, specifically \(R=(A\times C)\cup(\neg A\times V)\), i.e. \(R(x,y)=\max\big(\min(A(x),C(y)),1-A(x)\big)\), with inference by max–min composition. Later work generalised this to \(R_i=\Phi(A_i,C_i)\), where \(\Phi\) is a t-norm (conjunctive reading) or a fuzzy implication (logical reading).</p>
+    <p>For an observation \(A'\), the compositional rule of inference, in its sup-\(T\) form, gives</p>
+    <div class="math-block">\[ B'(y)=\sup_{x}\,T\big(A'(x),R(x,y)\big). \]</div>
+    <p>With singleton fuzzification this reduces to \(B'(y)=R(x_0,y)\), which is why crisp inputs dominate in practice. The firing strength of rule \(i\) is \(\alpha_i(\mathbf{x})=T\big(A_{i1}(x_1),\dots,A_{in}(x_n)\big)\).</p>
+    <h3>Aggregate first or infer first</h3>
+    <p>With several rules, one either aggregates the rule relations and infers once (FATI) or infers with each rule and aggregates afterwards (FITA). Because any t-norm distributes over the maximum, the two coincide for conjunctive rules aggregated by max, for any input. For implicative rules aggregated by min they coincide for singleton inputs; for fuzzy inputs, FITA gives in general a less specific conclusion <span class="cite">[2]</span>.</p>
+    <div class="insight"><p>Every scheme is defined by three choices: the operator \(\Phi\), the aggregation (max, sum or min), and the nature of the consequent together with its defuzzification step.</p></div>
+  </div>
+</section>
+
+<section class="sec" id="classical">
+  <div class="sec-label"><span class="num">2</span>Classical schemes</div>
+  <div class="sec-body">
+    <h2>Mamdani, Larsen, Tsukamoto and TSK</h2>
+    <h3>Mamdani and Larsen</h3>
+    <p>The rule base is read as a disjunction of conjunctions <span class="cite">[3]</span>:</p>
+    <div class="math-block">\[ B'(y)=\max_i\,T\big(\alpha_i(\mathbf{x}),C_i(y)\big), \]</div>
+    <p>with \(T=\min\) (clipping, Mamdani) or the product (scaling, usually attributed to Larsen <span class="cite">[4, 5]</span>). In the original controller <span class="cite">[3]</span> the inputs were crisp and the action taken was the point of maximum membership (the midpoint of several peaks or of a plateau), i.e. a mean-of-maxima rule. The centroid \(y^*=\int yB'(y)\,dy\,/\!\int B'(y)\,dy\) became the usual choice later.</p>
+    <p>Zadeh <span class="cite">[1]</span> already noted that max–min composition makes the input–output relation discontinuous: small input changes have no effect until a threshold is crossed. Max–product composition does not behave this way, so product inference yields smoother maps.</p>
+    <h3>Tsukamoto</h3>
+    <p>Consequents are strictly monotonic membership functions, so each rule yields a crisp value \(z_i=C_i^{-1}(\alpha_i)\), and \(y=\sum_i\alpha_i z_i/\sum_i\alpha_i\) <span class="cite">[6]</span>. Defuzzification is avoided, but the monotonicity requirement limits the vocabulary of output terms.</p>
+    <h3>Takagi–Sugeno–Kang (TSK)</h3>
+    <p>The consequent is a function of the inputs, typically \(y_i=a_{i0}+\sum_j a_{ij}x_j\) <span class="cite">[7, 8]</span>, and</p>
+    <div class="math-block">\[ y(\mathbf{x})=\frac{\sum_i \alpha_i(\mathbf{x})\,y_i(\mathbf{x})}{\sum_i \alpha_i(\mathbf{x})}, \]</div>
+    <p>assuming the antecedents cover the input space (\(\sum_i\alpha_i(\mathbf{x})>0\), i.e. the rule base is complete <span class="cite">[12]</span>). The model is a smooth blend of local linear models. For fixed antecedents the output is linear in the consequent parameters; with differentiable membership functions (e.g. Gaussian) and the product t-norm it is also differentiable in the antecedent parameters, so it can be identified by least squares combined with gradient descent, as in ANFIS <span class="cite">[9]</span>.</p>
+  </div>
+</section>
+
+<section class="sec" id="logical">
+  <div class="sec-label"><span class="num">3</span>Logical and relational</div>
+  <div class="sec-body">
+    <h2>When a rule is a constraint</h2>
+    <h3>Implication-based inference</h3>
+    <p>If the rule is read as a genuine conditional, \(R_i=I(A_i,C_i)\), the rules act as constraints and are aggregated by conjunction:</p>
+    <div class="math-block">\[ B'(y)=\min_i\, I\big(\alpha_i(\mathbf{x}),C_i(y)\big),\qquad I(a,b)=\min(1,\,1-a+b)\ \text{(Łukasiewicz)}. \]</div>
+    <p>Dubois and Prade <span class="cite">[2]</span> showed that the two readings encode different knowledge. Conjunctive rules are positive evidence: adding rules widens the conclusion. Implicative rules are restrictions: adding rules narrows it. Implicative systems may therefore return empty or subnormal conclusions, which, rather than a weakness, makes inconsistencies in the rule base explicit.</p>
+    <h3>Relational inference</h3>
+    <p>Here the input–output dependence is a single fuzzy relation \(R\), and inference is the sup-\(T\) composition \(B'=A'\circ R\). Learning \(R\) from data leads to fuzzy relational equations, solved analytically by Sanchez <span class="cite">[10]</span> and extended to general connectives and identification by Pedrycz <span class="cite">[11]</span>. Relational models are compact, capture many-to-many mappings, and connect naturally to logic-oriented neurocomputing with fuzzy AND/OR neurons <span class="cite">[13]</span>.</p>
+    <h3>Perfect recall and rule interaction</h3>
+    <p>A basic requirement is perfect recall, \(A\circ(A\Rightarrow B)=B\), which Zadeh <span class="cite">[1]</span> showed to hold exactly only for crisp sets. For \(R=\bigcup_k(A_k\times B_k)\) with normal \(A_k\) and sup–min composition,</p>
+    <div class="math-block">\[ (A_k\circ R)(y)=\max\Big(B_k(y),\ \max_{i\neq k}\min\big(\Pi(A_i|A_k),\,B_i(y)\big)\Big),\qquad \Pi(A_i|A_k)=\sup_x\min\big(A_i(x),A_k(x)\big). \]</div>
+    <p>Hence \(B_k\subseteq A_k\circ R\) always, with equality (no interaction between rules) e.g. when the antecedents are pairwise disjoint <span class="cite">[12]</span>. In the lab above, tick “Show the recall” to see this effect in the example.</p>
+  </div>
+</section>
+
+<section class="sec" id="example">
+  <div class="sec-label"><span class="num">4</span>Worked example</div>
+  <div class="sec-body">
+    <h2>The arithmetic behind the lab</h2>
+    <p>One input \(x\in[0,10]\) with triangular terms Low \(=(0,0,10)\) and High \(=(0,10,10)\), and one output \(y\in[0,100]\) with Small \(=(0,25,50)\) and Large \(=(50,75,100)\). For \(x_0=6\) the firing strengths are \(\alpha_1=0.4\) and \(\alpha_2=0.6\).</p>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Outputs of the schemes for the same rules and \(x_0=6\).</caption>
+        <thead><tr><th>Scheme</th><th>Output fuzzy set or computation</th><th>Crisp output</th></tr></thead>
+        <tbody>
+          <tr><td>Mamdani (min, max)</td><td>Small clipped at 0.4 ∪ Large clipped at 0.6</td><td>Centroid: \(y^*\approx 53.4\)</td></tr>
+          <tr><td>Larsen (product, max)</td><td>0.4·Small ∪ 0.6·Large</td><td>Centroid: \(y^*=55.0\)</td></tr>
+          <tr><td>TSK order 0 (\(c_i=25,75\))</td><td>\((0.4\cdot25+0.6\cdot75)/(0.4+0.6)\)</td><td>\(y=55.0\)</td></tr>
+          <tr><td>Implicative (Łukasiewicz)</td><td>\(\min\big(\min(1,0.6+S),\,\min(1,0.4+L)\big)\); height 0.6</td><td>MOM: \(y^*=75\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Conditions and derivation</h3>
+    <p>All results use singleton fuzzification, \(T=\min\) for the firing strengths, and a continuous centroid over \([0,100]\) (mean of maxima for the implicative output). The two modified consequents do not overlap, so the centroid of their union is the area-weighted mean of their own centroids, which stay at 25 and 75 by symmetry. A triangle of base 50 clipped at height \(\alpha\) has area \(25\alpha(2-\alpha)\); hence \(A_1=16\), \(A_2=21\) and</p>
+    <div class="math-block">\[ y^*_{\text{Mamdani}}=\frac{16\cdot25+21\cdot75}{37}=\frac{1975}{37}\approx 53.38. \]</div>
+    <p>Scaling (Larsen) gives areas \(25\alpha_i\), i.e. 10 and 15, so \(y^*=(10\cdot25+15\cdot75)/25=55\), which equals the zero-order TSK output. In general, Larsen inference with centroid weights rule \(i\) by \(\alpha_i\) times the area of \(C_i\); under the conditions met here (non-overlapping consequents of equal area) it coincides with zero-order TSK with \(c_i\) the consequent centroids. These conditions are sufficient, not necessary. The implicative output equals 0.4 on \([0,50]\) (where \(L=0\)) and reaches its maximum 0.6 on \([55,95]\), whose midpoint gives \(y^*=75\).</p>
+    <div class="insight">
+      <p>The conjunctive schemes average the evidence of both rules and land between Small and Large. The implicative scheme keeps only the values not excluded by either rule: its output is subnormal (height 0.6), which signals that the two rules only partially agree, and it favours Large because \(R_2\) fires more strongly.</p>
+    </div>
+    <p>Mamdani and Assilian <span class="cite">[3]</span> already used the shape of the output for diagnosis: two separated peaks reveal contradictory rules, and a flat plateau reveals weak ones; mean-of-maxima defuzzification hides such multimodality <span class="cite">[12]</span>. The example also shows rule interaction: since \(\Pi(\text{High}|\text{Low})=0.5\), recalling Low through \(R\) gives \(\max(\text{Small},\min(0.5,\text{Large}))\) rather than Small.</p>
+  </div>
+</section>
+
+<section class="sec" id="advanced">
+  <div class="sec-label"><span class="num">5</span>Advanced schemes</div>
+  <div class="sec-body">
+    <h2>Gaps, dimensions, uncertainty and data</h2>
+    <h3>Interpolative and hierarchical</h3>
+    <p>The compositional rule gives no answer for observations that fall in gaps between antecedents. Rule interpolation <span class="cite">[14]</span> derives a conclusion from neighbouring rules, which allows sparse rule bases. Hierarchical systems split the inputs among low-dimensional subsystems so that the rule count grows linearly instead of exponentially <span class="cite">[15]</span>, at the cost of intermediate variables that are hard to interpret.</p>
+    <h3>Type-2</h3>
+    <p>In interval type-2 sets the membership grade is an interval, which models uncertainty about the membership function itself <span class="cite">[16, 17]</span>. Rules produce firing intervals, and a type-reduction step yields \([y_l,y_r]\) and then \(y=(y_l+y_r)/2\). The Karnik–Mendel algorithm computes the bounds iteratively; enhanced versions <span class="cite">[18]</span> and closed-form approximations such as Nie–Tan <span class="cite">[19]</span> reduce the cost. The gain is robustness to noise and to expert disagreement; the price is more parameters and computation.</p>
+    <h3>Learning-based</h3>
+    <p>Neuro-fuzzy systems such as ANFIS <span class="cite">[9]</span> train TSK systems as networks; evolving systems such as eTS <span class="cite">[20]</span> create and prune rules online from data streams. Current research integrates fuzzy inference with deep learning <span class="cite">[21]</span>.</p>
+    <h3>Granular inference</h3>
+    <p>From the perspective of granular computing <span class="cite">[22]</span>, the output of a fuzzy model should itself be an information granule (an interval or a fuzzy set) rather than a single number. The size of the granule then reflects the uncertainty of the result, which addresses a weakness shared by all schemes above: a crisp output hides the uncertainty from which it was derived. Granular fuzzy models generalise the numeric ones <span class="cite">[23]</span>; for instance, zero-order TSK models can be extended so that their rule conclusions become intervals, fuzzy sets or probabilistic granules, built with the principle of justifiable granularity <span class="cite">[24]</span>. Whether granule size can be read as a calibrated measure of reliability depends on how the granular model is constructed and validated, e.g. through its coverage–specificity trade-off <span class="cite">[23]</span>.</p>
+  </div>
+</section>
+
+<section class="sec" id="comparison">
+  <div class="sec-label"><span class="num">6</span>Comparison</div>
+  <div class="sec-body">
+    <h2>When to use each scheme</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <caption>Indicative tendencies, not benchmark results: they depend on the application, the fuzzy partitions, the number of rules and the learning method.</caption>
+        <thead><tr><th>Scheme</th><th>Consequent</th><th>Interpretab.</th><th>Accuracy</th><th>Cost</th><th>Learnability</th></tr></thead>
+        <tbody>
+          <tr><td>Mamdani / Larsen</td><td>Fuzzy set</td><td class="lvl-h">High</td><td>Medium</td><td>Medium–high</td><td>Medium</td></tr>
+          <tr><td>Tsukamoto</td><td>Monotonic fuzzy set</td><td>Medium</td><td>Medium</td><td>Low</td><td class="lvl-l">Low</td></tr>
+          <tr><td>TSK (1st order)</td><td>Linear function</td><td>Medium</td><td class="lvl-h">High</td><td>Low</td><td class="lvl-h">High</td></tr>
+          <tr><td>Implication-based</td><td>Fuzzy set</td><td class="lvl-h">High</td><td>Medium</td><td class="lvl-l">High</td><td class="lvl-l">Low</td></tr>
+          <tr><td>Relational</td><td>Fuzzy relation</td><td>Medium</td><td>Medium</td><td>Medium</td><td>Medium</td></tr>
+          <tr><td>Hierarchical</td><td>Any</td><td>Medium</td><td>Medium–high</td><td>Low</td><td>Medium</td></tr>
+          <tr><td>Interval type-2</td><td>Fuzzy set / function</td><td>Medium</td><td class="lvl-h">High</td><td class="lvl-l">High</td><td>Medium</td></tr>
+          <tr><td>Neuro-fuzzy / deep</td><td>Usually TSK</td><td class="lvl-l">Low–medium</td><td class="lvl-h">High</td><td>Medium–high</td><td class="lvl-h">High</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The table is a map of tendencies, not a ranking: a carefully designed Mamdani system can outperform a poorly tuned TSK model. The more robust comparison comes from the mathematical structure of each scheme.</p>
+    <ul class="choose">
+      <li><b>Mamdani / Larsen.</b> The output is a fuzzy set, and consequents are linguistic terms that experts can validate. Centroid defuzzification makes \(y^*\) a nonlinear function of the consequent parameters, which complicates learning. Choose when the model must be read and validated by people, or when the shape of \(B'\) itself is informative.</li>
+      <li><b>TSK.</b> For fixed antecedents the output is linear in the consequent parameters, so they can be estimated by least squares, and each rule is a local linear model that supports stability analysis. Choose for data-driven modelling, identification and model-based control.</li>
+      <li><b>Implication-based.</b> Rules are aggregated by conjunction, so each rule restricts the output. Choose when rules express constraints, or when conflicts between rules should be exposed rather than averaged.</li>
+      <li><b>Interval type-2.</b> Choose when the membership functions themselves are uncertain (noisy data, disagreeing experts) and the cost of type reduction is acceptable.</li>
+      <li><b>Hierarchical / interpolative.</b> Choose when the number of inputs or gaps in the rule base make a flat, complete rule base impractical.</li>
+    </ul>
+    <p>Inference schemes also underpin multicriteria decision-making under uncertainty, where fuzzy preference relations over alternatives are constructed, aggregated and exploited to rank or choose among options <span class="cite">[25, 26]</span>. Mamdani-type (product, centroid), additive and TSK systems are universal approximators on compact domains <span class="cite">[27, 28]</span>; these results are existential and say nothing about rule count or interpretability.</p>
+  </div>
+</section>
+
+<section class="sec" id="timeline">
+  <div class="sec-label"><span class="num">7</span>Timeline</div>
+  <div class="sec-body">
+    <h2>Five decades of schemes</h2>
+    <ol class="timeline">
+      <li><span class="yr">1973</span><span class="ev">Zadeh formalises rules as fuzzy relations and proposes the compositional rule of inference <span class="cite">[1]</span>.</span></li>
+      <li><span class="yr">1975</span><span class="ev">Mamdani and Assilian control a steam engine with linguistic rules and max–min inference <span class="cite">[3]</span>.</span></li>
+      <li><span class="yr">1976</span><span class="ev">Sanchez solves fuzzy relational equations analytically <span class="cite">[10]</span>.</span></li>
+      <li><span class="yr">1979</span><span class="ev">Tsukamoto proposes monotonic consequents without defuzzification <span class="cite">[6]</span>.</span></li>
+      <li><span class="yr">1980</span><span class="ev">Larsen reports industrial applications, including cement kilns <span class="cite">[4]</span>.</span></li>
+      <li><span class="yr">1983</span><span class="ev">Pedrycz extends relational equations to general connectives <span class="cite">[11]</span>.</span></li>
+      <li><span class="yr">1985</span><span class="ev">Takagi and Sugeno introduce functional consequents <span class="cite">[7]</span>.</span></li>
+      <li><span class="yr">1989</span><span class="ev">Pedrycz formalises completeness, interaction and consistency of rules <span class="cite">[12]</span>.</span></li>
+      <li><span class="yr">1993</span><span class="ev">ANFIS joins TSK and neural networks <span class="cite">[9]</span>; Kóczy and Hirota propose rule interpolation <span class="cite">[14]</span>.</span></li>
+      <li><span class="yr">1996</span><span class="ev">Dubois and Prade distinguish rules as evidence and as constraints <span class="cite">[2]</span>.</span></li>
+      <li><span class="yr">1999</span><span class="ev">Karnik, Mendel and Liang establish type-2 fuzzy logic systems <span class="cite">[16]</span>.</span></li>
+      <li><span class="yr">2004</span><span class="ev">Angelov and Filev propose online identification of TSK models <span class="cite">[20]</span>.</span></li>
+      <li><span class="yr">2010</span><span class="ev">Pedrycz, Ekel and Parreiras systematise fuzzy multicriteria decision-making <span class="cite">[25]</span>.</span></li>
+      <li><span class="yr">2013</span><span class="ev">Pedrycz consolidates granular computing <span class="cite">[22]</span>.</span></li>
+      <li><span class="yr">2023</span><span class="ev">Surveys on deep fuzzy systems and interpretability <span class="cite">[21]</span>.</span></li>
+      <li><span class="yr">2025</span><span class="ev">TSK models extended to granular conclusions <span class="cite">[24]</span>.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="problems">
+  <div class="sec-label"><span class="num">8</span>Open problems</div>
+  <div class="sec-body">
+    <h2>What is still unsolved</h2>
+    <ol class="problems">
+      <li><b>Scalability versus interpretability.</b> Rule explosion (\(m^n\) rules for \(n\) inputs with \(m\) terms) is mitigated by hierarchical and deep schemes, but at the expense of meaning.</li>
+      <li><b>Measuring interpretability.</b> Several indices exist <span class="cite">[29]</span>, but no accepted standard allows schemes to be compared fairly.</li>
+      <li><b>Efficient higher-type inference.</b> Type reduction is still a bottleneck for general type-2 systems in real-time and embedded settings.</li>
+      <li><b>Uncertainty-aware outputs.</b> Granular outputs that quantify their own credibility are promising but rarely used in learning-based models.</li>
+      <li><b>Benchmarking.</b> Different datasets and protocols make empirical rankings of schemes unreliable.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="references">
+  <div class="sec-label"><span class="num">9</span>References</div>
+  <div class="sec-body">
+    <h2>References</h2>
+    <ol class="refs">
+      <li>L. A. Zadeh, Outline of a new approach to the analysis of complex systems and decision processes, <i>IEEE Trans. SMC</i> 3(1) (1973) 28–44.</li>
+      <li>D. Dubois, H. Prade, What are fuzzy rules and how to use them, <i>Fuzzy Sets Syst.</i> 84(2) (1996) 169–185.</li>
+      <li>E. H. Mamdani, S. Assilian, An experiment in linguistic synthesis with a fuzzy logic controller, <i>Int. J. Man-Mach. Stud.</i> 7(1) (1975) 1–13.</li>
+      <li>P. M. Larsen, Industrial applications of fuzzy logic control, <i>Int. J. Man-Mach. Stud.</i> 12(1) (1980) 3–10.</li>
+      <li>A. Kandel, R. Pacheco, A. Martins, S. Khator, The foundations of rule-based computations in fuzzy models, in: W. Pedrycz (Ed.), <i>Fuzzy Modelling: Paradigms and Practice</i>, Kluwer, Boston, 1996, 231–263.</li>
+      <li>Y. Tsukamoto, An approach to fuzzy reasoning method, in: <i>Advances in Fuzzy Set Theory and Applications</i>, North-Holland, 1979, 137–149.</li>
+      <li>T. Takagi, M. Sugeno, Fuzzy identification of systems and its applications to modeling and control, <i>IEEE Trans. SMC</i> 15(1) (1985) 116–132.</li>
+      <li>M. Sugeno, G. T. Kang, Structure identification of fuzzy model, <i>Fuzzy Sets Syst.</i> 28(1) (1988) 15–33.</li>
+      <li>J.-S. R. Jang, ANFIS: Adaptive-network-based fuzzy inference system, <i>IEEE Trans. SMC</i> 23(3) (1993) 665–685.</li>
+      <li>E. Sanchez, Resolution of composite fuzzy relation equations, <i>Inf. Control</i> 30(1) (1976) 38–48.</li>
+      <li>W. Pedrycz, Fuzzy relational equations with generalized connectives and their applications, <i>Fuzzy Sets Syst.</i> 10 (1983) 185–201.</li>
+      <li>W. Pedrycz, <i>Fuzzy Control and Fuzzy Systems</i>, Research Studies Press, Taunton / Wiley, New York, 1989.</li>
+      <li>W. Pedrycz, F. Gomide, <i>Fuzzy Systems Engineering: Toward Human-Centric Computing</i>, Wiley-IEEE Press, 2007.</li>
+      <li>L. T. Kóczy, K. Hirota, Approximate reasoning by linear rule interpolation and general approximation, <i>Int. J. Approx. Reason.</i> 9(3) (1993) 197–225.</li>
+      <li>V. Torra, A review of the construction of hierarchical fuzzy systems, <i>Int. J. Intell. Syst.</i> 17(5) (2002) 531–543.</li>
+      <li>N. N. Karnik, J. M. Mendel, Q. Liang, Type-2 fuzzy logic systems, <i>IEEE Trans. Fuzzy Syst.</i> 7(6) (1999) 643–658.</li>
+      <li>J. M. Mendel, <i>Uncertain Rule-Based Fuzzy Systems</i>, 2nd ed., Springer, 2017.</li>
+      <li>D. Wu, J. M. Mendel, Enhanced Karnik–Mendel algorithms, <i>IEEE Trans. Fuzzy Syst.</i> 17(4) (2009) 923–934.</li>
+      <li>M. Nie, W. W. Tan, Towards an efficient type-reduction method for interval type-2 fuzzy logic systems, <i>Proc. FUZZ-IEEE</i> (2008) 1425–1432.</li>
+      <li>P. P. Angelov, D. P. Filev, An approach to online identification of Takagi–Sugeno fuzzy models, <i>IEEE Trans. SMC-B</i> 34(1) (2004) 484–498.</li>
+      <li>J. S. S. Júnior, J. Mendes, F. Souza, C. Premebida, Survey on deep fuzzy systems in regression applications: a view on interpretability, <i>Int. J. Fuzzy Syst.</i> 25(7) (2023) 2568–2589. doi:<a href="https://doi.org/10.1007/s40815-023-01544-8">10.1007/s40815-023-01544-8</a>.</li>
+      <li>W. Pedrycz, <i>Granular Computing: Analysis and Design of Intelligent Systems</i>, CRC Press, 2013.</li>
+      <li>W. Pedrycz, From fuzzy models to granular fuzzy models, <i>Int. J. Comput. Intell. Syst.</i> 9(Suppl. 1) (2016) 35–42. doi:<a href="https://doi.org/10.1080/18756891.2016.1180818">10.1080/18756891.2016.1180818</a>.</li>
+      <li>Y. Cui, H. E, W. Pedrycz, Z. Li, X. Wang, From fuzzy rule-based models to granular models, <i>IEEE Trans. Fuzzy Syst.</i> 33(2) (2025) 644–656. doi:<a href="https://doi.org/10.1109/TFUZZ.2024.3483817">10.1109/TFUZZ.2024.3483817</a>.</li>
+      <li>W. Pedrycz, P. Ekel, R. Parreiras, <i>Fuzzy Multicriteria Decision-Making: Models, Methods and Applications</i>, Wiley, 2010.</li>
+      <li>P. Ekel, W. Pedrycz, J. Pereira Jr., <i>Multicriteria Decision-Making under Conditions of Uncertainty</i>, Wiley, 2020.</li>
+      <li>L.-X. Wang, J. M. Mendel, Fuzzy basis functions, universal approximation, and orthogonal least-squares learning, <i>IEEE Trans. Neural Netw.</i> 3(5) (1992) 807–814.</li>
+      <li>B. Kosko, Fuzzy systems as universal approximators, <i>IEEE Trans. Comput.</i> 43(11) (1994) 1329–1333.</li>
+      <li>M. J. Gacto, R. Alcalá, F. Herrera, Interpretability of linguistic fuzzy rule-based systems: an overview of interpretability measures, <i>Inf. Sci.</i> 181(20) (2011) 4340–4360.</li>
+    </ol>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <span class="l-pt">Aline de Lurdes Zuliani Lunkes. Revisão baseada no relatório “Fuzzy Inference Schemes: A Concise Review”.</span><span class="l-en">Aline de Lurdes Zuliani Lunkes. Based on the report “Fuzzy Inference Schemes: A Concise Review”.</span>
+</footer>
+
+<script>
+(function(){
+  // theme toggle
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  function cur(){ var t=root.getAttribute('data-theme'); if(t) return t; return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; }
+  try{ var saved=localStorage.getItem('fis-theme'); if(saved) root.setAttribute('data-theme',saved); }catch(e){}
+  btn.addEventListener('click',function(){ var n=cur()==='dark'?'light':'dark'; root.setAttribute('data-theme',n); try{localStorage.setItem('fis-theme',n);}catch(e){} draw(); });
+
+  // language
+  var EN_IDS=['en','lab','framework','classical','logical','example','advanced','comparison','timeline','problems','references'];
+  var PT_IDS=['pt','laboratorio','quadro','classicos','logicos','exemplo','avancados','comparacao','historia','problemas','referencias'];
+  var lang='pt';
+  try{ var sl=localStorage.getItem('fis-lang'); if(sl) lang=sl; }catch(e){}
+  var h=location.hash.slice(1);
+  if(EN_IDS.indexOf(h)>=0) lang='en'; else if(PT_IDS.indexOf(h)>=0) lang='pt';
+  function setLang(l){ lang=l; root.setAttribute('data-lang',l); root.setAttribute('lang',l==='en'?'en':'pt-BR'); try{localStorage.setItem('fis-lang',l);}catch(e){} if(typeof draw==='function') draw(); }
+  root.setAttribute('data-lang',lang); root.setAttribute('lang',lang==='en'?'en':'pt-BR');
+  document.getElementById('langBtn').addEventListener('click',function(){ setLang(lang==='en'?'pt':'en'); });
+  // open section from hash
+  if(h){ var target=(h==='lab')?'laboratorio':h; var el=document.getElementById(target); if(el) setTimeout(function(){el.scrollIntoView();},80); }
+
+  // lab
+  var xs=document.getElementById('x'), xo=document.getElementById('xo'), svg=document.getElementById('plot'), rows=document.getElementById('rows');
+  var recall=document.getElementById('recall'), note=document.getElementById('recallNote');
+  var scheme='mam';
+  var T={pt:{names:{mam:'Mamdani',lar:'Larsen',tsk:'TSK (ordem 0)',imp:'Implicativo'},small:'Pequeno',large:'Grande',axis:'saída y',a1:'α₁ (Baixo)',a2:'α₂ (Alto)',dec:',',
+      note:'Recuperar Baixo por R = ∪(Aₖ × Bₖ) dá máx(Pequeno, mín(0,5; Grande)): como Π(Alto | Baixo) = 0,5, a regra R₂ interfere e aparece um patamar de 0,5 sobre Grande.'},
+    en:{names:{mam:'Mamdani',lar:'Larsen',tsk:'TSK (order 0)',imp:'Implicative'},small:'Small',large:'Large',axis:'output y',a1:'α₁ (Low)',a2:'α₂ (High)',dec:'.',
+      note:'Recalling Low through R = ∪(Aₖ × Bₖ) gives max(Small, min(0.5, Large)): since Π(High | Low) = 0.5, rule R₂ interferes and a 0.5 plateau appears over Large.'}};
+  function L_(){ return T[lang]; }
+  var N=801, ys=[]; for(var i=0;i<N;i++) ys.push(i*100/(N-1));
+  function tri(y,a,b,c){ if(y<=a||y>=c) return (y===b)?1:0; return y<b?(y-a)/(b-a):(c-y)/(c-b); }
+  var S=ys.map(function(y){return tri(y,0,25,50);}), L=ys.map(function(y){return tri(y,50,75,100);});
+  function centroid(B){ var n=0,d=0; for(var i=0;i<N;i++){n+=ys[i]*B[i]; d+=B[i];} return d>0?n/d:NaN; }
+  function mom(B){ var m=Math.max.apply(null,B), s=0,c=0; for(var i=0;i<N;i++){ if(Math.abs(B[i]-m)<1e-9){s+=ys[i];c++;} } return {y:s/c,h:m}; }
+  function compute(x){
+    var a1=1-x/10, a2=x/10, r={a1:a1,a2:a2};
+    r.mam=ys.map(function(_,i){return Math.max(Math.min(a1,S[i]),Math.min(a2,L[i]));});
+    r.lar=ys.map(function(_,i){return Math.max(a1*S[i],a2*L[i]);});
+    r.imp=ys.map(function(_,i){return Math.min(Math.min(1,1-a1+S[i]),Math.min(1,1-a2+L[i]));});
+    r.y={mam:centroid(r.mam), lar:centroid(r.lar), tsk:(a1*25+a2*75)/(a1+a2)};
+    var mm=mom(r.imp); r.y.imp=mm.y; r.h={mam:Math.max.apply(null,r.mam), lar:Math.max.apply(null,r.lar), tsk:Math.max(a1,a2), imp:mm.h};
+    return r;
+  }
+  function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  var W=640,H=262,m={l:40,r:12,t:30,b:36};
+  function X(y){return m.l+(W-m.l-m.r)*y/100;} function Y(v){return H-m.b-(H-m.t-m.b)*v;}
+  function path(B){ var d='M'+X(0)+','+Y(0); for(var i=0;i<N;i+=4) d+=' L'+X(ys[i]).toFixed(1)+','+Y(B[i]).toFixed(1); d+=' L'+X(100)+','+Y(B[N-1]).toFixed(1)+' L'+X(100)+','+Y(0)+' Z'; return d; }
+  function line(B){ var d=''; for(var i=0;i<N;i+=4) d+=(i?' L':'M')+X(ys[i]).toFixed(1)+','+Y(B[i]).toFixed(1); return d; }
+  function fmt(v){ return isNaN(v)?'—':v.toFixed(1).replace('.',L_().dec); }
+  function f2(v){ return v.toFixed(2).replace('.',L_().dec); }
+  function draw(){
+    var x=parseFloat(xs.value); xo.textContent=x.toFixed(1).replace('.',L_().dec);
+    var r=compute(x), col=scheme==='imp'?css('--imp'):scheme==='tsk'?css('--tsk'):css('--mam'), fill=scheme==='imp'?css('--imp-fill'):css('--mam-fill');
+    var s='';
+    // axes + grid
+    [0,0.5,1].forEach(function(v){ s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="'+css('--rule')+'" stroke-width="1"/>'; s+='<text x="'+(m.l-8)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+String(v).replace('.',L_().dec)+'</text>'; });
+    [0,25,50,75,100].forEach(function(v){ s+='<text x="'+X(v)+'" y="'+(H-m.b+18)+'" text-anchor="middle">'+v+'</text>'; });
+    s+='<text class="axis-t" x="'+X(50)+'" y="'+(H-4)+'" text-anchor="middle">'+L_().axis+'</text>';
+    // consequents
+    s+='<path d="'+line(S)+'" fill="none" stroke="'+css('--cons')+'" stroke-dasharray="4 4" stroke-width="1.2"/>';
+    s+='<path d="'+line(L)+'" fill="none" stroke="'+css('--cons')+'" stroke-dasharray="4 4" stroke-width="1.2"/>';
+    s+='<text x="'+X(25)+'" y="'+(Y(1)+14)+'" text-anchor="middle">'+L_().small+'</text><text x="'+X(75)+'" y="'+(Y(1)+14)+'" text-anchor="middle">'+L_().large+'</text>';
+    if(scheme==='tsk'){
+      [[25,r.a1],[75,r.a2]].forEach(function(p){ s+='<line x1="'+X(p[0])+'" x2="'+X(p[0])+'" y1="'+Y(0)+'" y2="'+Y(p[1])+'" stroke="'+col+'" stroke-width="4" stroke-linecap="round"/><circle cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="5" fill="'+col+'"/>'; });
+    } else {
+      s+='<path d="'+path(r[scheme])+'" fill="'+fill+'" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round"/>';
+    }
+    if(recall.checked){
+      var rec=ys.map(function(_,i){return Math.max(S[i],Math.min(0.5,L[i]));});
+      s+='<path d="'+line(rec)+'" fill="none" stroke="'+css('--ink')+'" stroke-width="1.6"/>';
+      note.textContent=L_().note;
+    } else note.textContent='';
+    var yv=r.y[scheme];
+    s+='<line x1="'+X(yv)+'" x2="'+X(yv)+'" y1="'+Y(0)+'" y2="'+(m.t-8)+'" stroke="'+col+'" stroke-width="2"/>';
+    s+='<text x="'+Math.min(Math.max(X(yv),m.l+40),W-m.r-40)+'" y="'+(m.t-12)+'" text-anchor="middle" style="fill:'+col+';font-weight:600">y* = '+fmt(yv)+'</text>';
+    svg.innerHTML=s;
+    var html='';
+    ['mam','lar','tsk','imp'].forEach(function(k){ html+='<tr class="'+(k===scheme?'on':'')+'"><td>'+L_().names[k]+'</td><td class="num">'+fmt(r.y[k])+'</td><td class="num">'+f2(r.h[k])+'</td></tr>'; });
+    html+='<tr><td colspan="3" style="color:var(--muted)">'+L_().a1+' = '+f2(r.a1)+', '+L_().a2+' = '+f2(r.a2)+'</td></tr>';
+    rows.innerHTML=html;
+  }
+  document.querySelectorAll('.seg button').forEach(function(b){ b.addEventListener('click',function(){ scheme=b.dataset.s; document.querySelectorAll('.seg button').forEach(function(o){o.setAttribute('aria-pressed',o===b?'true':'false');}); draw(); }); });
+  xs.addEventListener('input',draw); recall.addEventListener('change',draw);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+  draw();
+})();
+</script>
+</body>
+</html>
